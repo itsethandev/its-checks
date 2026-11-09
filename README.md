@@ -49,13 +49,20 @@ For unattended use, see [headless setup](docs/headless.md). For policy authoring
 
 ## Set up with an AI agent
 
-Give your agent the source repositories to use and this workflow:
+Give your AI agent this prompt. Replace or extend the policy source repository if you use other policies.
 
-1. Read this README and `docs/headless.md`.
-2. Discover each source through `options <owner/repo> --json` and use its returned exact commit.
-3. Inspect the project, explain suitable bundles and automation, and ask for selections and inputs that cannot be inferred. Do not supply secrets as answers.
-4. Create and review a combined plan, then apply the approved artifact.
-5. Ask before running installed formatters or lint fixes against project code.
+```text
+Set up policies from ItsEthanDev/its-checks in this project.
+
+1. Read the upstream documentation:
+   https://github.com/ItsEthanDev/its-checks/blob/main/README.md
+   https://github.com/ItsEthanDev/its-checks/blob/main/docs/headless.md
+2. Discover the available bundles and required inputs for each policy source using the documented headless interface. Use the exact commit returned by discovery for each source.
+3. Inspect this project's code, dependencies, and existing configuration to determine which bundles apply. Ask me about anything you cannot determine.
+4. Explain the available automations and ask which ones I want. Ask for any required setup inputs you cannot infer. Do not supply secrets as answers.
+5. Create and review a combined setup plan, then apply the approved artifact using the documented headless workflow.
+6. After setup succeeds, ask whether I want you to format the project and fix lint errors according to the newly added policies. Wait for my approval before making those fixes.
+```
 
 ## Develop
 
