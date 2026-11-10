@@ -81,9 +81,9 @@ Replace overwrites edits within its managed scope. Compose declares ownership pe
 
 ### JSON composition
 
-Object keys combine recursively. Scalars and arrays are atomic unless an array merge is explicitly declared. Identical values with matching ownership and merge settings coalesce; incompatible contributions fail. There is no implicit array concatenation or source-order winner.
+Object keys combine recursively. Scalars are atomic; arrays are atomic unless a merge or indexed field is explicitly declared. Identical values with matching ownership and merge settings coalesce; incompatible contributions fail. There is no implicit array concatenation or source-order winner.
 
-`defaultMode` sets ownership for contributed fields and defaults to `replace`. Every `fields` entry is an object keyed by a JSON Pointer. `mode` applies to the contributed subtree, and more-specific modes take precedence. A parent setting does not claim unrelated project fields. Pointers must exist in the contribution and traverse object keys, not array indexes. Escape `/` as `~1` and `~` as `~0`.
+`defaultMode` sets ownership for contributed fields and defaults to `replace`. Every `fields` entry is an object keyed by a JSON Pointer. `mode` applies to the contributed subtree, and more-specific modes take precedence. A parent setting does not claim unrelated project fields. Pointers must exist in the contribution and can traverse object keys and zero-based array indexes. Array indexes use decimal digits without leading zeros. Escape `/` as `~1` and `~` as `~0`.
 
 | Field mode | Application                                                                                             | Updates and removal                                    |
 | ---------- | ------------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
@@ -105,7 +105,7 @@ This example supplies overridable defaults except for one enforced rule:
 }
 ```
 
-Changing a managed field to `seed` preserves the current project value rather than deleting and reseeding it. Seeded defaults never update automatically. If a contributed child needs an object parent but the project has a scalar or array there, planning fails instead of overwriting the parent.
+Changing a managed field to `seed` preserves the current project value rather than deleting and reseeding it. Seeded defaults never update automatically. If a contributed child needs an object or array parent but the project has an incompatible value there, planning fails instead of overwriting the parent.
 
 ### Array merging
 
@@ -129,7 +129,29 @@ Declare array behavior in the same field object:
 
 `append-unique` requires `replace` mode, whether explicit or inherited. It makes the bundle's array items the managed scope, not the whole array. Unrelated project items remain; policy updates remove prior contributed items and append current items. Existing non-array project values cause a conflict.
 
-Items append in deterministic dependency-first, then source-qualified lexical bundle order, removing exact duplicates. Bundles contributing to the same array must declare the same merge and mode. Bundles contributing only other fields do not repeat that declaration. Without `merge`, an array is one value: `seed` preserves it if present, and `replace` overwrites it in full. Do not concatenate arrays whose order requires different semantics, such as linter rule tuples.
+Items append in deterministic dependency-first, then source-qualified lexical bundle order, removing exact duplicates. Bundles contributing to the same array must declare the same merge and mode. Bundles contributing only other fields do not repeat that declaration.
+
+Arrays are atomic unless a merge is declared on the array or a field is declared inside it. A pointer through an array makes that array compose by fixed position, not concatenation. Contributions must have matching lengths, and shared values at each position must be compatible. Existing non-array project values cause a conflict. Undeclared nested arrays remain atomic. Do not declare indexed fields inside an `append-unique` array: its item positions change during composition.
+
+For example, combine a rule's allowlists without concatenating its severity/options tuple. Each contributing bundle declares:
+
+```json
+"fields": {
+  "/rules/example/1/allow": { "merge": "append-unique" }
+}
+```
+
+Its native configuration supplies:
+
+```json
+{
+  "rules": {
+    "example": ["error", { "allow": ["externalName"] }]
+  }
+}
+```
+
+Another bundle can contribute different allowed names with the same declaration and severity. Project-added names and unrelated options remain intact. Updates and removal subtract managed names without shifting tuple positions; positions needed to retain remaining content keep their existing surrounding values.
 
 Prior pinned declarations and saved answers identify managed fields and array items to remove before recomposition. This is not a historical output baseline: direct edits to managed fields may be removed, while seeded and unrelated fields/items remain. JSON comments and formatting are not preserved when composition changes values.
 

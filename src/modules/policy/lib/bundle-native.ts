@@ -32,6 +32,11 @@ function checkComposition(ctx: Context, declaration: FileDeclaration, value: Jso
         for (const [key, child] of Object.entries(node)) {
           visit(child, `${at}/${key.replaceAll("~", "~0").replaceAll("/", "~1")}`, mode);
         }
+      } else if (
+        isArray(node) &&
+        Object.keys(declaration.fields ?? {}).some((key) => key.startsWith(`${at}/`))
+      ) {
+        node.forEach((child, index) => visit(child, `${at}/${index}`, mode));
       }
     };
     visit(value, "", declaration.defaultMode ?? "replace");
@@ -41,9 +46,15 @@ function checkComposition(ctx: Context, declaration: FileDeclaration, value: Jso
         ctx,
         pointer,
         field !== undefined,
-        "Declared field must exist and use object keys",
+        "Declared field must exist and use object keys or array indexes",
       );
       if (options.merge !== undefined) {
+        yield* validate(
+          ctx,
+          pointer,
+          !Object.keys(declaration.fields ?? {}).some((key) => key.startsWith(`${pointer}/`)),
+          "Cannot declare indexed fields within an append-unique array",
+        );
         yield* validate(
           ctx,
           pointer,

@@ -1,6 +1,9 @@
 {
   "jsPlugins": ["@convex-dev/eslint-plugin"],
   "ignorePatterns": ["**/convex/_generated/**"],
+  "rules": {
+    "no-underscore-dangle": ["error", { "allow": ["_id", "_creationTime", "_handler"] }]
+  },
   "overrides": [
     {
       "files": ["**/convex/**/*.ts"],

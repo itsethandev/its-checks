@@ -14,7 +14,8 @@
       "fields": {
         "/jsPlugins": { "merge": "append-unique" },
         "/overrides": { "merge": "append-unique" },
-        "/ignorePatterns": { "merge": "append-unique" }
+        "/ignorePatterns": { "merge": "append-unique" },
+        "/rules/no-underscore-dangle/1/allow": { "merge": "append-unique" }
       }
     }
   ]

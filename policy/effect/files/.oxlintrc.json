@@ -3,6 +3,7 @@
   "plugins": ["effecttsgo"],
   "extends": ["./node_modules/@effect/tsgo/oxlint-presets/strict.json"],
   "rules": {
+    "no-underscore-dangle": ["error", { "allow": ["_tag", "_meta"] }],
     "effecttsgo/strict-effect-provide": "off",
     "effecttsgo/unstable-api-usage": "off",
     "unicorn/throw-new-error": "off",

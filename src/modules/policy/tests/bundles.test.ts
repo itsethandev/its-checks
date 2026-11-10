@@ -19,7 +19,15 @@ for (const [label, options] of [
   ["invalid pointer escapes", { fields: { "/bad~2key": { mode: "seed" } } }],
   ["prototype pointers", { fields: { "/constructor": { mode: "seed" } } }],
   ["missing fields", { fields: { "/missing": { mode: "seed" } } }],
-  ["array indexes as fields", { fields: { "/values/0": { mode: "seed" } } }],
+  ["out-of-range array indexes", { fields: { "/values/1": { mode: "seed" } } }],
+  ["noncanonical array indexes", { fields: { "/values/00": { mode: "seed" } } }],
+  ["negative array indexes", { fields: { "/values/-1": { mode: "seed" } } }],
+  [
+    "indexes within appended arrays",
+    {
+      fields: { "/values": { merge: "append-unique" }, "/values/0": { mode: "replace" } },
+    },
+  ],
   ["non-array merges", { fields: { "/value": { merge: "append-unique" } } }],
   [
     "seeded append arrays",
@@ -54,6 +62,25 @@ for (const [label, options] of [
     await assert.rejects(f.load(["invalid"]));
   });
 }
+await test("policy loading accepts append declarations inside fixed-position arrays", async (t) => {
+  const f = await fixture(t);
+  await f.add("valid", { name: "Valid" });
+  await f.write("valid/files/config.json", {
+    rules: { example: ["error", { allow: ["external"] }] },
+  });
+  await f.add("valid", {
+    files: [
+      {
+        source: "files/config.json",
+        target: "config.json",
+        operation: "compose",
+        format: "json",
+        fields: { "/rules/example/1/allow": { merge: "append-unique" } },
+      },
+    ],
+  });
+  await f.load(["valid"]);
+});
 await test("policy loading accepts object-only fields with inherited modes and escaped pointers", async (t) => {
   const f = await fixture(t);
   await f.add("valid", { name: "Valid" });

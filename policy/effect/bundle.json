@@ -25,7 +25,8 @@
         "/plugins": { "merge": "append-unique" },
         "/extends": { "merge": "append-unique" },
         "/$schema": { "replaces": "typescript" },
-        "/rules/unicorn~1throw-new-error": { "replaces": "typescript" }
+        "/rules/unicorn~1throw-new-error": { "replaces": "typescript" },
+        "/rules/no-underscore-dangle/1/allow": { "merge": "append-unique" }
       }
     }
   ]

@@ -15,7 +15,12 @@ const keys = (at: string) =>
 export function fieldAt(value: JsonValue, at: string): JsonValue | undefined {
   let result = value;
   for (const key of keys(at)) {
-    const next = isObject(result) && Object.hasOwn(result, key) ? result[key] : undefined;
+    let next: JsonValue | undefined;
+    if (isObject(result) && Object.hasOwn(result, key)) {
+      next = result[key];
+    } else if (isArray(result) && /^(0|[1-9][0-9]*)$/.test(key)) {
+      next = result[Number(key)];
+    }
     if (next === undefined) {
       return undefined;
     }
@@ -26,7 +31,11 @@ export function fieldAt(value: JsonValue, at: string): JsonValue | undefined {
 export function field(value: JsonValue, at: string, source: string): JsonValue {
   const result = fieldAt(value, at);
   if (result === undefined) {
-    return conflict(source, at, "Replacement field must exist and use object keys");
+    return conflict(
+      source,
+      at,
+      "Replacement field must exist and use object keys or array indexes",
+    );
   }
   return result;
 }
@@ -38,6 +47,15 @@ export function setField(
 ): JsonValue {
   const set = (node: JsonValue, remaining: readonly string[]): JsonValue => {
     const [key, ...rest] = remaining;
+    if (isArray(node) && key !== undefined && /^(0|[1-9][0-9]*)$/.test(key)) {
+      const index = Number(key);
+      const child = node[index];
+      if (child === undefined) {
+        return conflict(source, at, "Missing replacement field");
+      }
+      const changed = rest.length === 0 ? replacement : set(child, rest);
+      return node.map((entry, position) => (position === index ? changed : entry));
+    }
     if (
       !isObject(node) ||
       key === undefined ||
@@ -58,6 +76,28 @@ export interface MergeContext {
   readonly fields: NativeFile["fields"];
   readonly source: string;
 }
+const indexed = (
+  value: JsonValue,
+  fields: NativeFile["fields"],
+  at: string,
+): readonly JsonValue[] | undefined =>
+  isArray(value) && Object.hasOwn(fields, `${at}/0`) ? value : undefined;
+function mergePositions(
+  a: readonly JsonValue[],
+  b: readonly JsonValue[],
+  context: MergeContext,
+  at: string,
+): JsonValue {
+  if (a.length !== b.length) {
+    return conflict(context.source, at, "Incompatible fixed-position array lengths");
+  }
+  return a.map((value, index) => {
+    const other = b[index];
+    return other === undefined
+      ? conflict(context.source, at, "Missing array position")
+      : merge(value, other, context, `${at}/${index}`);
+  });
+}
 export function merge(a: JsonValue, b: JsonValue, context: MergeContext, at = ""): JsonValue {
   if (isObject(a) && isObject(b)) {
     const result: Record<string, JsonValue> = { ...a };
@@ -70,6 +110,10 @@ export function merge(a: JsonValue, b: JsonValue, context: MergeContext, at = ""
   }
   if (context.fields[at]?.merge === "append-unique" && isArray(a) && isArray(b)) {
     return unique([...a, ...b]);
+  }
+  const positions = indexed(a, context.fields, at);
+  if (positions !== undefined && isArray(b)) {
+    return mergePositions(positions, b, context, at);
   }
   if (canonical(a) === canonical(b)) {
     return a;
@@ -108,7 +152,11 @@ function handedOff(current: NativeFile | undefined, prior: JsonValue, at: string
     return false;
   }
   const selected = fieldAt(current.value, at);
-  return selected !== undefined && (!isObject(selected) || !isObject(prior));
+  return (
+    selected !== undefined &&
+    !(isObject(selected) && isObject(prior)) &&
+    !(indexed(selected, current.fields, at) !== undefined && isArray(prior))
+  );
 }
 function subtract(
   target: JsonValue,
@@ -122,6 +170,19 @@ function subtract(
   if (isObject(prior) && isObject(target)) {
     return subtractObject(target, prior, context, at);
   }
+  const positions = indexed(prior, context.prior.fields, at);
+  if (positions !== undefined && isArray(target)) {
+    const remaining = target.map((value, index) => {
+      const old = positions[index];
+      return old === undefined ? value : subtract(value, old, context, `${at}/${index}`);
+    });
+    return remaining.every((value) => value === undefined)
+      ? undefined
+      : target.map((value, index) => {
+          const kept = remaining[index];
+          return kept === undefined ? value : kept;
+        });
+  }
   if (context.prior.fields[at]?.mode === "seed") {
     return target;
   }
@@ -129,6 +190,18 @@ function subtract(
     return target.filter((item) => !prior.some((old) => canonical(old) === canonical(item)));
   }
   return undefined;
+}
+function overlayPositions(
+  target: JsonValue | undefined,
+  selected: readonly JsonValue[],
+  file: NativeFile,
+  at: string,
+): JsonValue {
+  const result = isArray(target) ? [...target] : [];
+  selected.forEach((value, index) => {
+    result[index] = overlay(result[index], value, file, `${at}/${index}`);
+  });
+  return result;
 }
 function overlay(
   target: JsonValue | undefined,
@@ -144,6 +217,10 @@ function overlay(
     }
     return result;
   }
+  const positions = indexed(selected, file.fields, at);
+  if (positions !== undefined) {
+    return overlayPositions(target, positions, file, at);
+  }
   if (target !== undefined && file.fields[at]?.mode === "seed") {
     return target;
   }
@@ -153,6 +230,7 @@ function overlay(
   return selected;
 }
 function checkStructure(target: JsonValue, selected: JsonValue, file: NativeFile, at = "") {
+  const positions = indexed(selected, file.fields, at);
   if (isObject(selected)) {
     if (!isObject(target)) {
       conflict(
@@ -167,6 +245,16 @@ function checkStructure(target: JsonValue, selected: JsonValue, file: NativeFile
         checkStructure(existing, value, file, pointer(at, key));
       }
     }
+  } else if (positions !== undefined) {
+    if (!isArray(target)) {
+      conflict(file.source, at, "Cannot compose indexed fields into a non-array project value");
+    }
+    positions.forEach((value, index) => {
+      const existing = target[index];
+      if (existing !== undefined) {
+        checkStructure(existing, value, file, `${at}/${index}`);
+      }
+    });
   } else if (file.fields[at]?.merge === "append-unique" && !isArray(target)) {
     conflict(file.source, at, "Cannot append items to a non-array project value");
   }
