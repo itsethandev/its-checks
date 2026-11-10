@@ -32,6 +32,8 @@ Once the approved migration is complete, the module catalog is current, and veri
 
 ## Required structure
 
+Before proposing moves, identify file locations, naming conventions, and generated-file boundaries relied on by the project's frameworks and tooling. Preserve these contracts. For example, keep shadcn UI primitives in their configured components directory, and keep TanStack Start route files in their configured routes directory. Routes can delegate application logic to modules; UI primitives need not be moved or wrapped merely to fit the module layout. Adapt module boundaries to these contracts, not the reverse.
+
 Each module exposes public entry points at its root. All subdirectories are private to that module.
 
 ```text
