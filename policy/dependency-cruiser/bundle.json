@@ -6,8 +6,8 @@
     "dependency-cruiser": "18.7.2"
   },
   "scripts": {
-    "lint": "depcruise --config .dependency-cruiser.mjs .",
-    "lint:fix": "depcruise --config .dependency-cruiser.mjs ."
+    "lint": "depcruise .",
+    "lint:fix": "depcruise ."
   },
   "requires": ["typescript"],
   "files": [
@@ -17,9 +17,10 @@
       "operation": "seed"
     },
     {
-      "source": "files/.dependency-cruiser.mjs",
-      "target": ".dependency-cruiser.mjs",
-      "operation": "replace"
+      "source": "files/.dependency-cruiser.json",
+      "target": ".dependency-cruiser.json",
+      "operation": "replace",
+      "format": "json"
     },
     {
       "source": "files/.oxlintrc.json",
