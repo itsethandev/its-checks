@@ -1,9 +1,9 @@
 {
   "name": "Dependency Cruiser",
   "description": "Public module entry points, public-interface tests, and dependency hygiene",
-  "note": "**MIGRATION NOTE**\n\nTo adopt deep modules, ask your agent:\n\n\"Read src/modules/README.md. If it contains a migration TODO, work through it.\"",
+  "note": "**TYPESCRIPT COMPATIBILITY**\n\nTypeScript 7.0 is unsupported and can cause checks to pass without analyzing TypeScript sources. If your project uses TypeScript 7, upgrade to the verified 7.1.0-beta. Compatible TypeScript 2–6 versions remain supported.\n\nThis bundle installs dependency-cruiser, but leaves the TypeScript compiler under your project's control.\n\n**MIGRATION NOTE**\n\nTo adopt deep modules, ask your agent:\n\n\"Read src/modules/README.md. If it contains a migration TODO, work through it.\"",
   "devDependencies": {
-    "dependency-cruiser": "18.7.2"
+    "dependency-cruiser": "18.8.0-beta-2"
   },
   "scripts": {
     "lint": "depcruise .",
