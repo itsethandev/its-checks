@@ -7,6 +7,15 @@
   "requires": ["typescript"],
   "files": [
     {
+      "source": "files/.oxfmtrc.json",
+      "target": ".oxfmtrc.json",
+      "operation": "compose",
+      "format": "json",
+      "fields": {
+        "/ignorePatterns": { "merge": "append-unique" }
+      }
+    },
+    {
       "source": "files/.oxlintrc.json",
       "target": ".oxlintrc.json",
       "operation": "compose",
