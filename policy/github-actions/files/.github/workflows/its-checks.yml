@@ -50,4 +50,4 @@ jobs:
             bun) bun install --frozen-lockfile ;;
             *) echo "Unsupported package manager: $MANAGER" >&2; exit 1 ;;
           esac
-      - run: node --run check
+      - run: node --run check:ci

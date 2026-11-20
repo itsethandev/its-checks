@@ -1,8 +1,9 @@
 {
   "name": "Husky pre-commit",
-  "description": "Check the whole package before commits; never fix or stage files",
+  "description": "Check working-tree formatting and lint before commits; never fix or stage files",
   "scripts": {
-    "postinstall": "husky"
+    "postinstall": "husky",
+    "check:precommit": "node --run fmt:check && node --run lint"
   },
   "devDependencies": {
     "husky": "9.1.7"

@@ -1,2 +1,2 @@
 # its-checks: managed
-node --run check
+node --run check:precommit

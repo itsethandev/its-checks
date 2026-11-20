@@ -6,8 +6,8 @@
     "dependency-cruiser": "18.8.0-beta-2"
   },
   "scripts": {
-    "lint": "depcruise .",
-    "lint:fix": "depcruise ."
+    "lint:deps": "depcruise .",
+    "check:ci": "node --run lint:deps"
   },
   "requires": ["typescript"],
   "files": [

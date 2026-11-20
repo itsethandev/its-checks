@@ -1,6 +1,7 @@
 {
   "name": "GitHub Actions checks",
-  "description": "Node 24 quality checks using the declared, tested package manager",
+  "description": "Run check:ci in GitHub Actions using the project's declared package manager",
+  "note": "The workflow runs check:ci. Add any required project-owned type checking and tests to check:ci or separate CI jobs.",
   "requires": ["typescript"],
   "files": [
     {

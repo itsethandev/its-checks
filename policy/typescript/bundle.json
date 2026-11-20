@@ -1,12 +1,13 @@
 {
   "name": "TypeScript",
   "description": "Opinionated formatting and type-aware linting",
+  "note": "Update any project-owned callers of the old check script to use fmt:check and lint individually, or check:ci for the combined CI checks.",
   "scripts": {
     "fmt": "oxfmt .",
     "fmt:check": "oxfmt --check .",
     "lint": "oxlint --deny-warnings .",
     "lint:fix": "oxlint --fix --deny-warnings .",
-    "check": "node --run fmt:check && node --run lint"
+    "check:ci": "node --run fmt:check && node --run lint"
   },
   "devDependencies": {
     "oxfmt": "0.75.0",
